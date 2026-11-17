@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HUÁSCAR 3D — Guerra del Pacífico 1879</title>
+<meta name="description" content="Videojuego 3D de los combates navales de Iquique y Angamos. Trabajo final de Videojuegos II (UTP) — Elio José Gabancho Catunta.">
+<link rel="icon" href="assets/pixelart/png/icono_ancla.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="lienzo"></div>
+
+<!-- HUD del juego (se llena por código) -->
+<div id="hud" class="oculto">
+  <div id="hudTop">
+    <div id="hudNivel"></div>
+    <div id="hudObjetivo"></div>
+    <div id="hudTiempo"></div>
+    <div id="hudPuntaje">000000</div>
+  </div>
+  <div id="hudJugadores"></div>
+  <div id="hudMensaje"></div>
+  <div id="hudVoz" class="oculto"><img src="assets/pixelart/png/icono_microfono.png" alt=""> <span id="hudVozTxt">Escuchando…</span></div>
+  <div id="qa" class="oculto"></div>
+</div>
+
+<!-- CARGA -->
+<section id="pCarga" class="pantalla visible">
+  <div class="caja centro">
+    <img class="logo px" src="assets/pixelart/png/logo_huascar3d.png" alt="HUÁSCAR 3D">
+    <p>Cargando recursos…</p>
+    <div class="barraCarga"><div id="cargaBar"></div></div>
+  </div>
+</section>
+
+<!-- PORTADA -->
+<section id="pPortada" class="pantalla">
+  <div class="portada">
+    <img class="logo grande px" src="assets/pixelart/png/logo_huascar3d.png" alt="HUÁSCAR 3D — Guerra del Pacífico 1879">
+    <p class="sub">Combates navales de Iquique y Angamos</p>
+    <div class="integrantes">
+      <div class="tit">— INTEGRANTE —</div>
+      <div class="nom">Elio José Gabancho Catunta</div>
+      <div class="curso">Desarrollado y sustentado para el curso Videojuegos II<br>Universidad Tecnológica del Perú · 2026</div>
+    </div>
+    <button id="btnComenzar" class="btn parpadea">PRESIONA ENTER O CLIC PARA COMENZAR</button>
+    <p class="mini" id="verTxt"></p>
+  </div>
+</section>
+
+<!-- REGISTRO DEL COMANDANTE (voz + DNI) -->
+<section id="pRegistro" class="pantalla">
+  <div class="caja ancha">
+    <h2><img class="px ic" src="assets/pixelart/png/icono_microfono.png" alt=""> REGISTRO DEL COMANDANTE</h2>
+    <div class="fila">
+      <label>Nombre<input id="regNombre" type="text" maxlength="18" placeholder="Opcional" autocomplete="off"></label>
+      <label>DNI (8 dígitos)<input id="regDni" type="text" inputmode="numeric" maxlength="8" placeholder="00000000" autocomplete="off"></label>
+    </div>
+    <div class="fila">
+      <div class="grupo">
+        <span>Sexo según DNI</span>
+        <label class="radio"><input type="radio" name="sexo" value="M"> Masculino (M)</label>
+        <label class="radio"><input type="radio" name="sexo" value="F"> Femenino (F)</label>
+      </div>
+    </div>
+    <p id="regAviso" class="aviso"></p>
+    <div class="vozBox">
+      <button id="btnHablar" class="btn">🎤 HABLAR</button>
+      <div class="vozTextos">
+        <div class="mini">Di una frase. El juego la reconocerá y la repetirá con voz <span id="regGeneroTxt">según tu sexo</span>.</div>
+        <div id="regTranscripcion" class="transcripcion">…</div>
+        <div id="regVozInfo" class="mini"></div>
+      </div>
+    </div>
+    <div id="regEscribir" class="fila oculto">
+      <label class="largo">Tu navegador no reconoce voz. Escribe la frase y el juego la repetirá:
+        <input id="regFrase" type="text" maxlength="80" placeholder="Escribe aquí y presiona Repetir"></label>
+      <button id="btnRepetir" class="btn chico">REPETIR</button>
+    </div>
+    <div class="fila fin">
+      <span class="mini">🔒 Los datos se usan solo en este dispositivo. No se envían a ningún servidor.</span>
+      <button id="btnRegOk" class="btn">CONTINUAR ▶</button>
+    </div>
+  </div>
+</section>
+
+<!-- MENÚ -->
+<section id="pMenu" class="pantalla">
+  <div class="menu">
+    <img class="logo px" src="assets/pixelart/png/logo_huascar3d.png" alt="HUÁSCAR 3D">
+    <p id="menuSaludo" class="sub"></p>
+    <button class="btn" data-ir="1P">1 JUGADOR</button>
+    <button class="btn" data-ir="2P">2 JUGADORES · COOPERATIVO</button>
+    <button class="btn" data-ir="DUELO">DUELO 1 vs 1</button>
+    <div class="menuFila">
+      <button class="btn chico" data-ver="pHistoria">HISTORIA</button>
+      <button class="btn chico" data-ver="pControles">CONTROLES</button>
+      <button class="btn chico" data-ver="pOpciones">OPCIONES</button>
+      <button class="btn chico" data-ver="pPuntajes">PUNTAJES</button>
+      <button class="btn chico" data-ver="pCreditos">CRÉDITOS</button>
+    </div>
+    <div class="menuFila"><span class="mini">Empezar en:</span>
+      <label class="radio mini"><input type="radio" name="nivelIni" value="0" checked> Nivel 1 · Iquique</label>
+      <label class="radio mini"><input type="radio" name="nivelIni" value="1"> Nivel 2 · Angamos</label>
+    </div>
+  </div>
+</section>
+
+<section id="pHistoria" class="pantalla">
+  <div class="caja ancha">
+    <h2>HISTORIA REAL</h2>
+    <div class="histo">
+      <img class="px retrato" src="assets/pixelart/png/retrato_grau.png" alt="Miguel Grau">
+      <div>
+        <p><b>Guerra del Pacífico (1879–1884).</b> Conflicto entre Chile y la alianza de Perú y Bolivia. En 1879 la campaña naval decidió el control del mar.</p>
+        <p><b>Iquique, 21 de mayo de 1879.</b> El monitor <i>Huáscar</i>, al mando de Miguel Grau, y la fragata <i>Independencia</i> atacaron a los buques chilenos que bloqueaban el puerto: la corbeta <i>Esmeralda</i> (Arturo Prat) y la goleta <i>Covadonga</i> (Carlos Condell). El Huáscar hundió a la Esmeralda con su espolón; Grau rescató a los náufragos chilenos. La Independencia encalló en Punta Gruesa persiguiendo a la Covadonga.</p>
+        <p><b>Angamos, 8 de octubre de 1879.</b> El Huáscar y la corbeta <i>Unión</i> fueron cercados frente a Punta Angamos por la escuadra chilena (<i>Cochrane</i>, <i>Blanco Encalada</i>, <i>Covadonga</i>, <i>O’Higgins</i>, <i>Loa</i> y <i>Matías Cousiño</i>). Grau murió en combate y el Huáscar fue capturado tras una dura resistencia; la Unión logró escapar.</p>
+        <p class="mini">Miguel Grau es recordado como «El Caballero de los Mares» por su trato humanitario con el adversario. El juego recrea los hechos con respeto por ambos bandos.</p>
+      </div>
+    </div>
+    <button class="btn chico volver">◀ VOLVER</button>
+  </div>
+</section>
+
+<section id="pControles" class="pantalla">
+  <div class="caja ancha">
+    <h2>CONTROLES</h2>
+    <table class="tabla">
+      <tr><th>Acción</th><th>1 Jugador</th><th>J1 (2 jugadores)</th><th>J2 (2 jugadores)</th></tr>
+      <tr><td>Avante / atrás</td><td>W / S</td><td>W / S</td><td>↑ / ↓</td></tr>
+      <tr><td>Timón</td><td>A / D</td><td>A / D</td><td>← / →</td></tr>
+      <tr><td>Apuntar</td><td>Mouse (torre)</td><td>Q / E giran la torre</td><td>, / . disparan banda izq./der.</td></tr>
+      <tr><td>Disparar</td><td>Clic izquierdo</td><td>Espacio</td><td>Enter (banda automática)</td></tr>
+      <tr><td>Espolonazo</td><td>E (barra llena)</td><td>F</td><td>Shift derecho</td></tr>
+      <tr><td>Comando de voz</td><td>V (mantener): “fuego”, “espolón”, “avante”, “alto”, “pausa”</td><td>—</td><td>—</td></tr>
+      <tr><td>Pausa / QA / Silencio</td><td colspan="3">P &nbsp;/&nbsp; F2 &nbsp;/&nbsp; M</td></tr>
+    </table>
+    <button class="btn chico volver">◀ VOLVER</button>
+  </div>
+</section>
+
+<section id="pOpciones" class="pantalla">
+  <div class="caja">
+    <h2>OPCIONES</h2>
+    <label class="slider">Volumen general <input id="opVol" type="range" min="0" max="1" step="0.05"></label>
+    <label class="slider">Música <input id="opMus" type="range" min="0" max="1" step="0.05"></label>
+    <label class="slider">Efectos <input id="opSfx" type="range" min="0" max="1" step="0.05"></label>
+    <button id="btnCambiarPerfil" class="btn chico">CAMBIAR COMANDANTE (VOZ / DNI)</button>
+    <button class="btn chico volver">◀ VOLVER</button>
+  </div>
+</section>
+
+<section id="pPuntajes" class="pantalla">
+  <div class="caja">
+    <h2>MEJORES PUNTAJES</h2>
+    <table class="tabla" id="tablaPuntajes"></table>
+    <button class="btn chico volver">◀ VOLVER</button>
+  </div>
+</section>
+
+<section id="pCreditos" class="pantalla">
+  <div class="caja ancha">
+    <h2>CRÉDITOS</h2>
+    <p><b>Diseño, programación y arte pixel art:</b> Elio José Gabancho Catunta</p>
+    <p><b>Curso:</b> Videojuegos II — Universidad Tecnológica del Perú (2026)</p>
+    <p><b>Tecnología:</b> JavaScript + Three.js r149 (licencia MIT) · Web Speech API · Web Audio API</p>
+    <p><b>Fuente:</b> Press Start 2P (licencia SIL OFL)</p>
+    <p><b>Audio:</b> ver el archivo CREDITOS_AUDIO.md del proyecto</p>
+    <p><b>Calidad total:</b> principios de W. Edwards Deming (ciclo PDCA)</p>
+    <div class="retratos">
+      <img class="px" src="assets/pixelart/png/retrato_grau.png" title="Miguel Grau" alt="">
+      <img class="px" src="assets/pixelart/png/retrato_more.png" title="Juan Guillermo More" alt="">
+      <img class="px" src="assets/pixelart/png/retrato_garcia.png" title="Aurelio García y García" alt="">
+      <img class="px" src="assets/pixelart/png/retrato_prat.png" title="Arturo Prat" alt="">
+      <img class="px" src="assets/pixelart/png/retrato_condell.png" title="Carlos Condell" alt="">
+      <img class="px" src="assets/pixelart/png/retrato_latorre.png" title="Juan José Latorre" alt="">
+      <img class="px" src="assets/pixelart/png/retrato_riveros.png" title="Galvarino Riveros" alt="">
+    </div>
+    <button class="btn chico volver">◀ VOLVER</button>
+  </div>
+</section>
+
+<!-- BRIEFING -->
+<section id="pBriefing" class="pantalla">
+  <div class="caja ancha">
+    <div class="mini" id="brNivel"></div>
+    <h2 id="brTitulo"></h2>
+    <div class="histo">
+      <div class="brRetratos" id="brRetratos"></div>
+      <div>
+        <p id="brTexto"></p>
+        <p class="obj"><b>OBJETIVO:</b> <span id="brObjetivo"></span></p>
+        <p class="mini" id="brExtra"></p>
+      </div>
+    </div>
+    <button id="btnZarpar" class="btn parpadea">¡ZARPAR! (ENTER)</button>
+  </div>
+</section>
+
+<!-- PAUSA -->
+<section id="pPausa" class="pantalla">
+  <div class="caja centro">
+    <h2>PAUSA</h2>
+    <button id="btnContinuar" class="btn">CONTINUAR (P)</button>
+    <button id="btnReiniciar" class="btn chico">REINICIAR NIVEL</button>
+    <button id="btnSalir" class="btn chico">SALIR AL MENÚ</button>
+  </div>
+</section>
+
+<!-- RESULTADO / FINAL -->
+<section id="pResultado" class="pantalla">
+  <div class="caja ancha centro">
+    <h2 id="resTitulo"></h2>
+    <p id="resSub" class="sub"></p>
+    <div class="histo">
+      <img id="resRetrato" class="px retrato" src="assets/pixelart/png/retrato_grau.png" alt="">
+      <p id="resHistoria"></p>
+    </div>
+    <table class="tabla" id="resTabla"></table>
+    <button id="btnResOk" class="btn parpadea">CONTINUAR (ENTER)</button>
+  </div>
+</section>
+
+<script src="js/lib/three.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/util/guardado.js"></script>
+<script src="js/util/input.js"></script>
+<script src="js/audio/audio.js"></script>
+<script src="js/voice/voz.js"></script>
+<script src="js/fx/texturas_datos.js"></script>
+<script src="js/fx/sprites.js"></script>
+<script src="js/fx/efectos.js"></script>
+<script src="js/world/oceano.js"></script>
+<script src="js/world/costa.js"></script>
+<script src="js/ships/modelos.js"></script>
+<script src="js/ships/buque.js"></script>
+<script src="js/combat/proyectiles.js"></script>
+<script src="js/ai/ia.js"></script>
+<script src="js/ui/hud.js"></script>
+<script src="js/levels/nivel1_iquique.js"></script>
+<script src="js/levels/nivel2_angamos.js"></script>
+<script src="js/levels/duelo.js"></script>
+<script src="js/scenes/juego.js"></script>
+<script src="js/scenes/pantallas.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
