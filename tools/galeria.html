@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>Galería de buques — HUÁSCAR 3D</title>
+<style>body{margin:0;background:#dfe9f2;font-family:Arial}canvas{display:block}</style></head>
+<body>
+<script src="../js/lib/three.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/fx/texturas_datos.js"></script>
+<script src="../js/fx/sprites.js"></script>
+<script src="../js/ships/modelos.js"></script>
+<script>
+/* Galería para la documentación: dibuja cada buque de 1879 con su nombre (abrir con un servidor local) */
+const claves = ['huascar','independencia','union','esmeralda','covadonga','cochrane','blanco','ohiggins','loa','cousino'];
+const W = 1500, Hh = 640, cols = 5, cw = W / cols, ch = Hh / 2;
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(W, Hh); r.setScissorTest(true); document.body.appendChild(r.domElement);
+H.tex.cargar(() => {}, () => {
+  claves.forEach((k, i) => {
+    const e = new THREE.Scene(); e.background = new THREE.Color(0xdfe9f2);
+    e.add(new THREE.HemisphereLight(0xffffff, 0x6080a0, 1.0)); const s = new THREE.DirectionalLight(0xffffff, 0.8); s.position.set(40, 60, 30); e.add(s);
+    const m = H.modelos.crear(k).grupo; m.rotation.y = -0.45; e.add(m);
+    const agua = new THREE.Mesh(new THREE.CircleGeometry(40, 32), new THREE.MeshLambertMaterial({ color: 0x3f86b8 })); agua.rotation.x = -Math.PI / 2; agua.position.y = 0.2; e.add(agua);
+    const c = new THREE.PerspectiveCamera(32, cw / ch, 1, 500); c.position.set(88, 40, 66); c.lookAt(0, 9, 0);
+    const x = (i % cols) * cw, y = (1 - Math.floor(i / cols)) * ch;
+    r.setViewport(x, y, cw, ch); r.setScissor(x, y, cw, ch); r.render(e, c);
+  });
+  const lab = document.createElement('div'); lab.id = 'listo'; document.body.appendChild(lab);
+  claves.forEach((k, i) => { const d = document.createElement('div'); d.textContent = H.TIPOS[k].nombre + ' · ' + H.TIPOS[k].clase + ' · ' + (H.TIPOS[k].bando === 'PE' ? 'Perú' : 'Chile');
+    Object.assign(d.style, { position: 'absolute', left: ((i % cols) * cw + 8) + 'px', top: (Math.floor(i / cols) * ch + 8) + 'px', font: 'bold 15px Arial', color: '#0b2a5b' }); document.body.appendChild(d); });
+});
+</script></body></html>
