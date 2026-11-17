@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><title>Galería de buques — HUÁSCAR 3D</title>
-<style>body{margin:0;background:#dfe9f2;font-family:Arial}canvas{display:block}</style></head>
+<style>body{margin:0;background:#f2f2f3;font-family:Arial}canvas{display:block}</style></head>
 <body>
 <script src="../js/lib/three.min.js"></script>
 <script src="../js/config.js"></script>
@@ -14,7 +14,7 @@ const W = 1500, Hh = 640, cols = 5, cw = W / cols, ch = Hh / 2;
 const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(W, Hh); r.setScissorTest(true); document.body.appendChild(r.domElement);
 H.tex.cargar(() => {}, () => {
   claves.forEach((k, i) => {
-    const e = new THREE.Scene(); e.background = new THREE.Color(0xdfe9f2);
+    const e = new THREE.Scene(); e.background = new THREE.Color(0xf2f2f3);
     e.add(new THREE.HemisphereLight(0xffffff, 0x6080a0, 1.0)); const s = new THREE.DirectionalLight(0xffffff, 0.8); s.position.set(40, 60, 30); e.add(s);
     const m = H.modelos.crear(k).grupo; m.rotation.y = -0.45; e.add(m);
     const agua = new THREE.Mesh(new THREE.CircleGeometry(40, 32), new THREE.MeshLambertMaterial({ color: 0x3f86b8 })); agua.rotation.x = -Math.PI / 2; agua.position.y = 0.2; e.add(agua);
@@ -24,6 +24,6 @@ H.tex.cargar(() => {}, () => {
   });
   const lab = document.createElement('div'); lab.id = 'listo'; document.body.appendChild(lab);
   claves.forEach((k, i) => { const d = document.createElement('div'); d.textContent = H.TIPOS[k].nombre + ' · ' + H.TIPOS[k].clase + ' · ' + (H.TIPOS[k].bando === 'PE' ? 'Perú' : 'Chile');
-    Object.assign(d.style, { position: 'absolute', left: ((i % cols) * cw + 8) + 'px', top: (Math.floor(i / cols) * ch + 8) + 'px', font: 'bold 15px Arial', color: '#0b2a5b' }); document.body.appendChild(d); });
+    Object.assign(d.style, { position: 'absolute', left: ((i % cols) * cw + 8) + 'px', top: (Math.floor(i / cols) * ch + 8) + 'px', font: 'bold 15px Arial', color: '#1a1a1a' }); document.body.appendChild(d); });
 });
 </script></body></html>
