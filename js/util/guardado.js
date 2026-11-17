@@ -5,6 +5,8 @@ H.guardado = {
   _escribir(k, v) { try { localStorage.setItem('huascar3d_' + k, JSON.stringify(v)); } catch (e) { /* almacenamiento no disponible */ } },
   cargar() {
     Object.assign(H.opciones, this._leer('opciones', {}));
+    H.opciones.silencio = false;                       // el silencio (tecla M) no se conserva entre sesiones
+    if (H.opciones.musica < 0.3) H.opciones.musica = 0.6;
     Object.assign(H.perfil, this._leer('perfil', {}));
   },
   opciones() { this._escribir('opciones', H.opciones); },

@@ -82,7 +82,7 @@ H.pantallas = {
     this.irMenu();
   },
   irMenu() {
-    H.estado = 'MENU'; if (!H.juego.diorama) H.juego.iniciarDiorama();
+    H.estado = 'MENU'; H.audio.enJuego = false; H.audio.aplicarVolumen(); if (!H.juego.diorama) H.juego.iniciarDiorama();
     const p = H.perfil; H.util.$('menuSaludo').textContent = (p.sexo === 'F' ? 'Bienvenida, comandanta ' : 'Bienvenido, comandante ') + (p.nombre || '') + (p.dni ? ' · DNI ****' + String(p.dni).slice(-4) : '');
     this.mostrar('pMenu'); H.audio.ponerMusica(true);
   },
@@ -102,7 +102,7 @@ H.pantallas = {
   zarpar() {
     this.puntajeInicio = H.puntaje; H.estado = 'JUGANDO';
     H.juego.iniciar(this.def, H.modo); this.mostrar(null);
-    H.audio.musica.volume *= 0.5;
+    H.audio.enJuego = true; H.audio.aplicarVolumen();
     if (H.modo === '1P') H.voz.hablar('A sus puestos, ' + H.voz.tratamiento());
   },
   pausa(si) {
@@ -111,7 +111,7 @@ H.pantallas = {
   },
   resultado(res) {
     const $ = H.util.$, s = H.stats, pr = s.disparos ? Math.round(s.impactos / s.disparos * 100) : 0;
-    H.estado = 'RESULTADO'; H.audio.pararMotor(); H.audio.ponerAmbiente(false); H.audio.aplicarVolumen(); this.res = res;
+    H.estado = 'RESULTADO'; H.audio.pararMotor(); H.audio.ponerAmbiente(false); H.audio.enJuego = false; H.audio.aplicarVolumen(); this.res = res;
     const bonos = (res.bonos || []).slice();
     if (H.modo !== 'DUELO') { if (pr >= 30) bonos.push(['Precisión de artillería ' + pr + '%', pr * 20]); if (res.victoria && s.dano < 40) bonos.push(['Casco casi intacto', 700]); }
     bonos.forEach(b => { H.puntaje += b[1]; });

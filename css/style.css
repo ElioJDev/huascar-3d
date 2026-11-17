@@ -108,3 +108,4 @@ input.bien{border-color:#4fd18b}
 .hudJ.der .panel{left:auto;right:10px}
 .hudJ.der .radar{right:auto;left:10px}
 .hudJ.der .ayuda{left:auto;right:10px}
+#indSilencio{position:fixed;right:10px;top:10px;z-index:40;background:rgba(160,20,20,.9);border:2px solid #fff;padding:6px 10px;font-size:9px}

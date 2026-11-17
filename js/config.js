@@ -14,7 +14,7 @@ const H = {
   nivelIdx: 0,
   puntaje: 0,
   perfil: { nombre: '', dni: '', sexo: '' },
-  opciones: { vol: 0.8, musica: 0.45, sfx: 0.9, silencio: false },
+  opciones: { vol: 0.8, musica: 0.6, sfx: 0.9, silencio: false },
   debug: { bot: false, pasos: 1 }
 };
 

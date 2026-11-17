@@ -24,16 +24,19 @@ H.audio = {
       this.motor = this.ctx.createGain(); this.motor.gain.value = 0;
       src.connect(f); f.connect(this.motor); this.motor.connect(this.master); src.start();
     } catch (e) { this.ctx = null; }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     this.listo = true; this.aplicarVolumen();
     if (this._pendMusica) this.ponerMusica(true);
   },
   aplicarVolumen() {
     const o = H.opciones, v = o.silencio ? 0 : o.vol;
-    this.musica.volume = v * o.musica * 0.6; this.ambiente.volume = v * o.sfx * 0.35;
+    this.musica.volume = Math.min(1, v * o.musica * 1.5) * (this.enJuego ? 0.6 : 1);
+    const ind = document.getElementById('indSilencio'); if (ind) ind.classList.toggle('oculto', !o.silencio); this.ambiente.volume = v * o.sfx * 0.35;
     if (this.master) this.master.gain.value = v * o.sfx;
   },
   silenciar() { H.opciones.silencio = !H.opciones.silencio; this.aplicarVolumen(); H.guardado.opciones(); },
-  ponerMusica(si) { this._pendMusica = si; if (!this.listo) return; if (si) this.musica.play().catch(() => {}); else this.musica.pause(); },
+  ponerMusica(si) { this._pendMusica = si; if (!this.listo) return; if (si) { const p = this.musica.play(); if (p && p.catch) p.catch(e => { console.warn('Música bloqueada:', e.message); this.listo = false; this._rearmar(); }); } else this.musica.pause(); },
+  _rearmar() { const f = () => { this.listo = true; this.aplicarVolumen(); if (this._pendMusica) this.ponerMusica(true); }; addEventListener('pointerdown', f, { once: true }); addEventListener('keydown', f, { once: true }); },
   ponerAmbiente(si) { if (!this.listo) return; if (si) this.ambiente.play().catch(() => {}); else this.ambiente.pause(); },
   velMotor(v) { if (this.motor) this.motor.gain.value = Math.min(0.5, 0.08 + Math.abs(v) * 0.014); },
   pararMotor() { if (this.motor) this.motor.gain.value = 0; },
