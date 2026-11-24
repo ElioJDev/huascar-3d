@@ -94,6 +94,8 @@
     <button class="btn" data-ir="1P">1 JUGADOR</button>
     <button class="btn" data-ir="2P">2 JUGADORES · COOPERATIVO</button>
     <button class="btn" data-ir="DUELO">DUELO 1 vs 1</button>
+    <button class="btn rojo" id="btnEnLinea">🌐 EN LÍNEA · 2 JUGADORES (DESDE OTRA PC)</button>
+    <p id="menuAviso" class="aviso"></p>
     <div class="menuFila">
       <button class="btn chico" data-ver="pHistoria">HISTORIA</button>
       <button class="btn chico" data-ver="pControles">CONTROLES</button>
@@ -182,6 +184,50 @@
   </div>
 </section>
 
+<!-- SALA EN LÍNEA -->
+<section id="pSala" class="pantalla">
+  <div class="caja ancha">
+    <h2>🌐 PARTIDA EN LÍNEA · 2 JUGADORES</h2>
+    <p class="mini">Juega con otra persona desde otra computadora y otro lugar. Uno crea la sala (J1 · Huáscar) y el otro se une con el código (J2).</p>
+    <div id="salaInicio" class="salaCols">
+      <div class="salaCol">
+        <h3>CREAR SALA</h3>
+        <p class="mini">Serás el anfitrión: J1 con el Huáscar. Tu navegador ejecuta la partida.</p>
+        <button id="btnCrearSala" class="btn">CREAR SALA</button>
+      </div>
+      <div class="salaCol">
+        <h3>UNIRSE A UNA SALA</h3>
+        <p class="mini">Escribe el código de 5 caracteres que te compartieron.</p>
+        <input id="salaCodigo" type="text" maxlength="5" placeholder="ABC12" autocomplete="off" class="codigo">
+        <button id="btnUnirse" class="btn">UNIRSE</button>
+      </div>
+    </div>
+    <div id="salaHost" class="oculto">
+      <div class="salaCols">
+        <div class="salaCol centro">
+          <div class="mini">CÓDIGO DE LA SALA</div>
+          <div id="salaCodigoGrande" class="codigoGrande">·····</div>
+          <button id="btnCopiarSala" class="btn chico">COPIAR ENLACE PARA EL JUGADOR 2</button>
+          <div id="salaEnlace" class="mini enlace"></div>
+          <div id="salaJugadores" class="jugadores"></div>
+        </div>
+        <div class="salaCol">
+          <div class="mini">MODO DE JUEGO</div>
+          <label class="radio"><input type="radio" name="salaModo" value="2P-0" checked> Cooperativo · Nivel 1 Iquique (J2: Independencia)</label>
+          <label class="radio"><input type="radio" name="salaModo" value="2P-1"> Cooperativo · Nivel 2 Angamos (J2: Unión)</label>
+          <label class="radio"><input type="radio" name="salaModo" value="DUELO-0"> Duelo 1 vs 1 (J2: Almirante Cochrane)</label>
+          <button id="btnIniciarSala" class="btn" disabled>INICIAR PARTIDA ▶</button>
+        </div>
+      </div>
+    </div>
+    <div id="salaGuest" class="oculto centro"><p id="salaGuestInfo"></p>
+      <p class="mini">Controles de J2: W/S máquinas · A/D timón · Clic o Espacio fuego · Q/E babor/estribor · F espolón · P pausa</p></div>
+    <p id="salaEstado" class="salaEstado"></p>
+    <p class="mini">Si no conecta, prueba con otra red (por ejemplo, el hotspot del celular): algunas redes de empresas o universidades bloquean las conexiones directas.</p>
+    <button id="btnSalaVolver" class="btn chico">◀ SALIR DE LA SALA</button>
+  </div>
+</section>
+
 <!-- BRIEFING -->
 <section id="pBriefing" class="pantalla">
   <div class="caja ancha">
@@ -224,6 +270,7 @@
 </section>
 
 <script src="js/lib/three.min.js"></script>
+<script src="js/lib/peerjs.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/util/guardado.js"></script>
 <script src="js/util/input.js"></script>
@@ -243,6 +290,7 @@
 <script src="js/levels/nivel2_angamos.js"></script>
 <script src="js/levels/duelo.js"></script>
 <script src="js/scenes/juego.js"></script>
+<script src="js/net/red.js"></script>
 <script src="js/scenes/pantallas.js"></script>
 <script src="js/main.js"></script>
 </body>

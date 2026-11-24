@@ -4,16 +4,17 @@ H.hud = {
   pan: [], tMsg: 0, verQA: false,
   crear(J) {
     const c = H.util.$('hudJugadores'); c.innerHTML = ''; this.pan = [];
-    const n = J.humanos.length, uno = H.modo === '1P';
-    J.humanos.forEach((b, i) => {
-      const d = document.createElement('div'); d.className = 'hudJ' + (n > 1 && i === 1 ? ' der' : '');
-      d.style.left = (i * 100 / n) + '%'; d.style.width = (100 / n) + '%';
+    const vistas = J.vistas.length ? J.vistas : J.humanos.map((b, i) => i), n = vistas.length;
+    vistas.forEach((i, k) => {
+      const b = J.humanos[i], uno = J.mandoMouse(i), red = !!H.online;
+      const d = document.createElement('div'); d.className = 'hudJ' + (n > 1 && k === 1 ? ' der' : '');
+      d.style.left = (k * 100 / n) + '%'; d.style.width = (100 / n) + '%';
       const torre = b.T.arma === 'torre';
-      const ayuda = uno ? 'W/S máquinas · A/D timón · Mouse apunta · Clic dispara · E espolón · V voz · P pausa'
+      const ayuda = red && i === 1 ? 'W/S máquinas · A/D timón · Clic o Espacio fuego · Q/E babor/estribor · F espolón' : uno ? 'W/S máquinas · A/D timón · Mouse apunta · Clic dispara · E espolón · V voz · P pausa'
         : i === 0 ? 'J1: W/S · A/D · Q/E torre · Espacio fuego · F espolón' : 'J2: ↑/↓ · ←/→ · Enter fuego · , . bandas · Shift der. espolón';
       d.innerHTML = `<div class="vineta"></div>
         <div class="panel">
-          <div class="nombre">${n > 1 ? 'J' + (i + 1) + ' · ' : ''}${b.nombre}</div>
+          <div class="nombre">${n > 1 || red ? 'J' + (i + 1) + ' · ' : ''}${b.nombre}${red ? ' · EN LÍNEA' : ''}</div>
           <div class="et"><img src="assets/pixelart/png/icono_casco.png" alt="">CASCO <span class="tHp"></span></div><div class="bar bCasco"><div></div></div>
           ${torre ? '<div class="et"><img src="assets/pixelart/png/icono_canon.png" alt="">TORRE</div><div class="bar bRec r1"><div></div></div>'
             : '<div class="et"><img src="assets/pixelart/png/icono_canon.png" alt="">BABOR / ESTRIBOR</div><div class="bar bRec r1"><div></div></div><div class="bar bRec r2" style="margin-top:2px"><div></div></div>'}
@@ -26,7 +27,7 @@ H.hud = {
         <div class="ayuda">${ayuda}</div>`;
       c.appendChild(d);
       const q = s => d.querySelector(s);
-      this.pan.push({ d, hp: q('.bCasco>div'), tHp: q('.tHp'), r1: q('.r1>div'), r2: q('.r2>div'), esp: q('.bEsp>div'), tEsp: q('.tEsp'), vel: q('.tVel'),
+      this.pan.push({ j: i, d, hp: q('.bCasco>div'), tHp: q('.tHp'), r1: q('.r1>div'), r2: q('.r2>div'), esp: q('.bEsp>div'), tEsp: q('.tEsp'), vel: q('.tVel'),
         vin: q('.vineta'), est: q('.estado'), mira: q('.mira'), ctx: q('.radar').getContext('2d') });
     });
     if (n === 2) { const dv = document.createElement('div'); dv.className = 'divisor'; c.appendChild(dv); }
@@ -35,17 +36,18 @@ H.hud = {
   },
   mensaje(txt, seg = 3.5) { const m = H.util.$('hudMensaje'); m.textContent = txt; m.style.opacity = 1; this.tMsg = seg; },
   flotante(txt, idx = 0) {
-    const p = this.pan[idx] || this.pan[0]; if (!p) return;
+    const p = this.pan.find(x => x.j === idx); if (!p) return;
     const f = document.createElement('div'); f.className = 'flot'; f.textContent = txt; p.d.appendChild(f); setTimeout(() => f.remove(), 1200);
   },
   actualizar(J, dt) {
     const $ = H.util.$;
     if (this.tMsg > 0) { this.tMsg -= dt; if (this.tMsg <= 0) $('hudMensaje').style.opacity = 0; }
     $('hudPuntaje').textContent = String(H.puntaje).padStart(6, '0');
-    $('hudObjetivo').textContent = J.nivel.objetivoTxt(J);
-    $('hudTiempo').textContent = J.nivel.tiempoTxt ? J.nivel.tiempoTxt(J) : '';
-    J.humanos.forEach((b, i) => {
-      const p = this.pan[i]; if (!p) return;
+    const remoto = H.online === 'guest' && H.red.ultimo;
+    $('hudObjetivo').textContent = remoto ? remoto.obj : J.nivel.objetivoTxt(J);
+    $('hudTiempo').textContent = remoto ? remoto.tie : (J.nivel.tiempoTxt ? J.nivel.tiempoTxt(J) : '');
+    this.pan.forEach(p => {
+      const b = J.humanos[p.j]; if (!b) return;
       const r = Math.max(0, b.hp) / b.maxHp;
       p.hp.style.width = (r * 100) + '%'; p.hp.style.background = r > 0.6 ? '#2ea3ff' : r > 0.3 ? '#ffaa22' : '#ff3322';
       p.tHp.textContent = Math.ceil(r * 100) + '%';

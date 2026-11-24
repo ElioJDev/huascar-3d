@@ -36,7 +36,16 @@ H.pantallas = {
     clic($('btnZarpar'), () => this.zarpar());
     clic($('btnContinuar'), () => this.pausa(false));
     clic($('btnReiniciar'), () => { H.puntaje = this.puntajeInicio || 0; this.zarpar(); });
-    clic($('btnSalir'), () => this.irMenu());
+    clic($('btnSalir'), () => this.salir());
+    // --- Sala en línea ---
+    clic($('btnEnLinea'), () => this.irSala());
+    clic($('btnCrearSala'), () => { if (!H.red.disponible()) return this.aviso('No se pudo cargar PeerJS. Revisa tu conexión a internet.'); H.red.crearSala(); this.pintarSala(); });
+    clic($('btnUnirse'), () => { if (!H.red.disponible()) return this.aviso('No se pudo cargar PeerJS. Revisa tu conexión a internet.'); H.red.unirse($('salaCodigo').value); this.pintarSala(); });
+    $('salaCodigo').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5); });
+    clic($('btnCopiarSala'), () => { const u = this.enlaceSala(); try { navigator.clipboard.writeText(u); $('btnCopiarSala').textContent = '¡ENLACE COPIADO!'; } catch (e) { prompt('Copia este enlace:', u); } });
+    clic($('btnIniciarSala'), () => this.iniciarEnLinea());
+    clic($('btnSalaVolver'), () => { H.red.enviar({ t: 'menu' }); H.red.cerrar(); this.irMenu(); });
+    const sala = new URLSearchParams(location.search).get('sala'); if (sala) $('salaCodigo').value = sala.toUpperCase().slice(0, 5);
     clic($('btnResOk'), () => this.trasResultado());
   },
   irPortada() { H.estado = 'PORTADA'; this.mostrar('pPortada'); H.audio.ponerMusica(true); },
@@ -79,12 +88,44 @@ H.pantallas = {
     H.perfil.nombre = $('regNombre').value.trim(); H.perfil.dni = $('regDni').value; H.guardado.perfil();
     H.voz.elegirVoz(H.perfil.sexo);
     H.voz.hablar((H.perfil.sexo === 'F' ? 'Bienvenida, comandanta ' : 'Bienvenido, comandante ') + (H.perfil.nombre || ''));
+    if (new URLSearchParams(location.search).get('sala') && !this._salaUsada) { this._salaUsada = true; this.irMenu(); return this.irSala(); }
     this.irMenu();
   },
   irMenu() {
     H.estado = 'MENU'; H.audio.enJuego = false; H.audio.aplicarVolumen(); if (!H.juego.diorama) H.juego.iniciarDiorama();
     const p = H.perfil; H.util.$('menuSaludo').textContent = (p.sexo === 'F' ? 'Bienvenida, comandanta ' : 'Bienvenido, comandante ') + (p.nombre || '') + (p.dni ? ' · DNI ****' + String(p.dni).slice(-4) : '');
     this.mostrar('pMenu'); H.audio.ponerMusica(true);
+  },
+  aviso(txt) { const a = H.util.$('menuAviso'); if (a) { a.textContent = txt; setTimeout(() => { if (a.textContent === txt) a.textContent = ''; }, 6000); } },
+  enlaceSala() { return location.origin + location.pathname + '?sala=' + H.red.codigo; },
+  irSala() {
+    H.estado = 'MENU'; H.online = null; H.audio.enJuego = false; H.audio.aplicarVolumen();
+    if (!H.juego.diorama) H.juego.iniciarDiorama();
+    this.mostrar('pSala'); this.pintarSala(); H.audio.ponerMusica(true);
+  },
+  pintarSala() {
+    const $ = H.util.$, R = H.red, host = R.rol === 'host', guest = R.rol === 'guest';
+    $('salaInicio').classList.toggle('oculto', host || guest);
+    $('salaHost').classList.toggle('oculto', !host);
+    $('salaGuest').classList.toggle('oculto', !guest);
+    if (host) {
+      $('salaCodigoGrande').textContent = R.codigo || '·····'; $('salaEnlace').textContent = R.codigo ? this.enlaceSala() : '';
+      $('btnIniciarSala').disabled = !R.conectado;
+      $('salaJugadores').innerHTML = 'J1 · ' + (H.perfil.nombre || 'Anfitrión') + ' (Huáscar)<br>J2 · ' + (R.conectado ? (R.otroNombre || 'Jugador 2') + ' ✔' : 'esperando…');
+    }
+    if (guest) $('salaGuestInfo').innerHTML = 'Sala <b>' + R.codigo + '</b>' + (R.conectado ? ' · Anfitrión: ' + (R.otroNombre || 'Jugador 1') : '');
+    if (!R.rol && !$('salaEstado').textContent) R.estado('Crea una sala o únete con el código que te compartieron.');
+  },
+  iniciarEnLinea() {
+    if (!H.red.conectado) return;
+    const v = (document.querySelector('input[name=salaModo]:checked') || {}).value || '2P-0';
+    const [modo, niv] = v.split('-'); H.online = 'host'; H.modo = modo; H.nivelIdx = parseInt(niv, 10) || 0; H.puntaje = 0;
+    this.briefing();
+  },
+  salir() {
+    if (H.online === 'host') { H.red.enviar({ t: 'menu' }); return this.irSala(); }
+    if (H.online === 'guest') { H.red.cerrar(); return this.irMenu(); }
+    this.irMenu();
   },
   nuevaPartida(modo) {
     H.modo = modo; H.puntaje = 0;
@@ -97,24 +138,38 @@ H.pantallas = {
     $('brNivel').textContent = def.nombre + ' · ' + def.fecha + ' · ' + (H.modo === '1P' ? '1 jugador' : H.modo === '2P' ? '2 jugadores cooperativo' : 'duelo');
     $('brTitulo').textContent = b.titulo; $('brTexto').textContent = b.texto; $('brObjetivo').textContent = b.objetivo; $('brExtra').textContent = b.extra;
     $('brRetratos').innerHTML = b.retratos.map(r => `<figure><img src="assets/pixelart/png/${r[0]}.png" alt=""><figcaption>${r[1]}</figcaption></figure>`).join('');
+    if (H.online) $('brNivel').textContent += ' · EN LÍNEA (' + (H.online === 'host' ? 'eres J1 · Huáscar' : 'eres J2 · ' + (H.modo === 'DUELO' ? 'Cochrane' : H.nivelIdx === 0 ? 'Independencia' : 'Unión') + ' · W/S A/D, clic o Espacio fuego, Q/E bandas, F espolón') + ')';
+    const z = $('btnZarpar'); z.disabled = H.online === 'guest'; z.textContent = H.online === 'guest' ? 'ESPERANDO AL ANFITRIÓN…' : '¡ZARPAR! (ENTER)';
+    if (H.online === 'host') H.red.enviar({ t: 'briefing', modo: H.modo, nivel: H.nivelIdx, pts: H.puntaje });
     this.mostrar('pBriefing');
   },
   zarpar() {
+    if (H.online === 'guest') return;
+    if (H.online === 'host') { if (!H.red.conectado) return this.irSala(); H.red.reiniciarEntradas(); H.red.ev.length = 0; H.red.tRecibido = performance.now(); H.red.enviar({ t: 'zarpar' }); }
     this.puntajeInicio = H.puntaje; H.estado = 'JUGANDO';
     H.juego.iniciar(this.def, H.modo); this.mostrar(null);
     H.audio.enJuego = true; H.audio.aplicarVolumen();
     if (H.modo === '1P') H.voz.hablar('A sus puestos, ' + H.voz.tratamiento());
   },
-  pausa(si) {
+  zarparInvitado() {
+    H.red.reiniciarEntradas(); H.red.tRecibido = performance.now(); H.estado = 'JUGANDO';
+    H.juego.iniciar(this.def, H.modo); this.mostrar(null);
+    H.audio.enJuego = true; H.audio.aplicarVolumen();
+  },
+  pausa(si, remoto) {
+    if (H.online === 'guest' && !remoto) { H.red.enviar({ t: si ? 'pedirPausa' : 'pedirSeguir' }); return; }
+    if (H.online === 'host') H.red.enviar({ t: 'pausa', si });
+    H.util.$('btnReiniciar').classList.toggle('oculto', !!H.online);
+    if (H.online) H.red.tRecibido = performance.now();
     if (si && H.estado === 'JUGANDO') { H.estado = 'PAUSA'; this.mostrar('pPausa'); H.audio.pararMotor(); H.audio.ponerAmbiente(false); }
     else if (!si && H.estado === 'PAUSA') { H.estado = 'JUGANDO'; this.mostrar(null); H.audio.ponerAmbiente(true); }
   },
-  resultado(res) {
+  resultado(res, remoto) {
     const $ = H.util.$, s = H.stats, pr = s.disparos ? Math.round(s.impactos / s.disparos * 100) : 0;
     H.estado = 'RESULTADO'; H.audio.pararMotor(); H.audio.ponerAmbiente(false); H.audio.enJuego = false; H.audio.aplicarVolumen(); this.res = res;
     const bonos = (res.bonos || []).slice();
     if (H.modo !== 'DUELO') { if (pr >= 30) bonos.push(['Precisión de artillería ' + pr + '%', pr * 20]); if (res.victoria && s.dano < 40) bonos.push(['Casco casi intacto', 700]); }
-    bonos.forEach(b => { H.puntaje += b[1]; });
+    if (!remoto) bonos.forEach(b => { H.puntaje += b[1]; });
     $('resTitulo').textContent = res.titulo; $('resTitulo').style.color = res.victoria ? '#ffce54' : '#ff8a70';
     $('resSub').textContent = res.sub || ''; $('resHistoria').textContent = res.historia || ''; $('resRetrato').src = 'assets/pixelart/png/' + (res.retrato || 'retrato_grau') + '.png';
     let h = '';
@@ -127,15 +182,18 @@ H.pantallas = {
     $('resTabla').innerHTML = h;
     const sigue = H.modo !== 'DUELO' && res.victoria && H.nivelIdx < H.NIVELES.length - 1;
     $('btnResOk').textContent = sigue ? 'SIGUIENTE BATALLA (ENTER)' : (!res.victoria && !res.honor && H.modo !== 'DUELO') ? 'REINTENTAR (ENTER)' : 'CONTINUAR (ENTER)';
+    if (H.online === 'host') H.red.enviar({ t: 'fin', res, stats: Object.assign({}, H.stats), pts: H.puntaje });
+    const ok = $('btnResOk'); ok.disabled = H.online === 'guest'; if (H.online === 'guest') ok.textContent = 'ESPERANDO AL ANFITRIÓN…';
     this.mostrar('pResultado');
     if (H.modo === '1P') H.voz.hablar(res.victoria ? 'Victoria, ' + H.voz.tratamiento() : res.honor ? 'El Huáscar ha caído con honor' : 'Hemos sido hundidos');
   },
   trasResultado() {
-    const res = this.res; if (!res) return; this.res = null;
-    if (H.modo === 'DUELO') return this.irMenu();
+    const res = this.res; if (!res || H.online === 'guest') return; this.res = null;
+    if (H.modo === 'DUELO') return this.salir();
     if (res.victoria && H.nivelIdx < H.NIVELES.length - 1) { H.nivelIdx++; return this.briefing(); }
     if (!res.victoria && !res.honor) { H.puntaje = this.puntajeInicio || 0; return this.briefing(); }
-    H.guardado.agregarPuntaje({ nombre: H.perfil.nombre || 'Comandante', puntaje: H.puntaje, modo: H.modo, fecha: new Date().toLocaleDateString('es-PE') });
+    H.guardado.agregarPuntaje({ nombre: H.perfil.nombre || 'Comandante', puntaje: H.puntaje, modo: H.online ? 'EN LÍNEA' : H.modo, fecha: new Date().toLocaleDateString('es-PE') });
+    if (H.online === 'host') return this.salir();
     H.juego.iniciarDiorama(); H.estado = 'MENU'; this.pintarPuntajes(); this.mostrar('pPuntajes'); H.audio.ponerMusica(true);
   },
   pintarPuntajes() {

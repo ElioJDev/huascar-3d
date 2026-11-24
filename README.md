@@ -22,9 +22,18 @@ El micrófono y las texturas necesitan un servidor (HTTPS o `localhost`); **no f
 | Historia real | Guerra del Pacífico; pantalla «Historia» y textos de cada batalla |
 | Sprites y texturas en Pixel Art (PNG y JPG) | `assets/pixelart/png`, `assets/pixelart/jpg`, `entregables/capturas_pixelart` |
 | Efectos | Explosiones, fogonazos, humo, columnas de agua, estela, sacudida de cámara, hundimiento, niebla |
-| Multijugador | 2 jugadores cooperativo en pantalla dividida y Duelo 1 vs 1 |
+| Multijugador | Local (pantalla dividida) y **en línea desde otra PC** (WebRTC): cooperativo y Duelo 1 vs 1 |
 | Calidad total (Deming) | Panel QA (F2), `docs/registro_pdca.md`, `docs/pruebas.md` |
 | Modelo de negocio | `docs/modelo_negocio.md` |
+
+## Multijugador en línea (desde otra computadora)
+1. **Jugador 1 (anfitrión):** Menú → **EN LÍNEA · 2 JUGADORES** → **CREAR SALA**. Aparece un código de 5 caracteres; con **COPIAR ENLACE** se copia el enlace directo.
+2. **Jugador 2:** abre el enlace (o el juego + **UNIRSE** con el código) desde su propia PC, en cualquier lugar.
+3. El anfitrión elige el modo (cooperativo Iquique, cooperativo Angamos o duelo) y pulsa **INICIAR**.
+
+Funciona con WebRTC (biblioteca PeerJS): las dos computadoras se conectan directamente y el anfitrión ejecuta la partida. Si una red bloquea la conexión (algunas redes de empresas o universidades), usa el hotspot del celular en una de las dos PCs.
+
+Controles del jugador 2 en línea: W/S máquinas · A/D timón · Clic o Espacio fuego · Q/E babor/estribor · F espolón · P pausa.
 
 ## Controles
 | Acción | 1 jugador | J1 (2 jugadores) | J2 (2 jugadores) |
@@ -49,4 +58,4 @@ assets/ (pixelart, audio, fonts) · docs/ · entregables/ · tools/ (generador d
 3. Abrir `https://eliojdev.github.io/huascar-3d/` en Chrome y probar micrófono, audio, 1 jugador y 2 jugadores.
 
 ## Créditos
-Three.js (MIT) · Fuente Press Start 2P (SIL OFL) · Audio: ver `CREDITOS_AUDIO.md`.
+Three.js (MIT) · PeerJS (MIT) · Fuente Press Start 2P (SIL OFL) · Audio: ver `CREDITOS_AUDIO.md`.

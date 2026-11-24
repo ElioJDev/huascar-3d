@@ -2,22 +2,24 @@
 /* juego.js — ejecución de un nivel: buques, control de los jugadores, cámaras (pantalla dividida), colisiones y reglas comunes */
 H.stats = { disparos: 0, impactos: 0, dano: 0, hundidos: 0, espolon: 0 };
 H.juego = {
-  escena: null, buques: [], humanos: [], camaras: [], marcas: [], nivel: null, t: 0, fin: null, tFin: 0, diorama: false, enRonda: false,
+  escena: null, buques: [], humanos: [], camaras: [], marcas: [], vistas: [], _sig: 0, nivel: null, t: 0, fin: null, tFin: 0, diorama: false, enRonda: false,
   _ray: new THREE.Raycaster(), _plano: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), apunte: new THREE.Vector3(),
 
   nuevaEscena(amb) {
-    H.fx.limpiar(); this.buques = []; this.humanos = []; this.camaras = []; this.marcas = [];
+    H.fx.limpiar(); this.buques = []; this.humanos = []; this.camaras = []; this.marcas = []; this._sig = 0;
     this.escena = new THREE.Scene(); H.mundo.crear(this.escena, amb); H.fx.init(this.escena); H.balas.init(this.escena);
     this.t = 0; this.fin = null;
   },
   agregar(clave, o) {
-    const b = new H.Buque(clave, o); this.escena.add(b.grupo); this.buques.push(b);
+    const b = new H.Buque(clave, o); b.id = ++this._sig; this.escena.add(b.grupo); this.buques.push(b);
     if (b.jugador !== null) this.humanos[b.jugador] = b;
     return b;
   },
+  /* Jugadores que se ven en esta pantalla: 1P → [0]; 2P local → [0, 1]; en línea → solo el propio */
+  verVistas() { return H.online === 'host' ? [0] : H.online === 'guest' ? [1] : this.humanos.map((b, i) => i); },
   _camaras() {
-    const n = this.humanos.length; this.camaras = []; this.marcas = [];
-    this.humanos.forEach(b => {
+    this.vistas = this.verVistas(); const n = this.vistas.length; this.camaras = []; this.marcas = [];
+    this.vistas.map(i => this.humanos[i]).forEach(b => {
       const c = new THREE.PerspectiveCamera(55, (innerWidth / n) / innerHeight, 1, 2800);
       const f = b.frente(); c.position.copy(b.pos).addScaledVector(f, -70).setY(34); c.lookAt(b.pos);
       this.camaras.push(c);
@@ -31,7 +33,7 @@ H.juego = {
     this.nuevaEscena(nivel.ambiente); nivel.crear(this, modo); this._camaras(); H.hud.crear(this);
     H.audio.campana(); H.audio.ponerAmbiente(true);
   },
-  nuevaRonda() { this.nuevaEscena(this.nivel.ambiente); this.nivel.crear(this, H.modo); this._camaras(); H.hud.crear(this); H.hud.mensaje('RONDA ' + this.nivel.ronda, 2.5); H.audio.campana(); },
+  nuevaRonda() { if (H.online === 'host') H.red.enviar({ t: 'ronda' }); this.nuevaEscena(this.nivel.ambiente); this.nivel.crear(this, H.modo); this._camaras(); H.hud.crear(this); H.hud.mensaje('RONDA ' + this.nivel.ronda, 2.5); H.audio.campana(); },
   iniciarDiorama() {
     this.diorama = true; this.nivel = null; this.nuevaEscena('atardecer');
     this.agregar('huascar', { control: 'NADA', x: 0, z: 0, rumbo: 0.4, maq: 0.5 });
@@ -46,8 +48,9 @@ H.juego = {
 
   /* ---------- Control de los jugadores ---------- */
   controlHumano(b, idx, dt) {
-    const I = H.input, uno = H.modo === '1P', j2 = !uno && idx === 1;
+    const I = H.input, uno = this.mandoMouse(idx), j2 = !uno && idx === 1;
     if (H.debug.bot) { b.ia.rango = 150; b.ia.error = 6; H.ia.actualizar(b, dt, this); return; }
+    if (H.online === 'host' && idx === 1) return this.controlRemoto(b, dt);
     const arr = j2 ? I.abajo('ArrowUp') : I.abajo('KeyW'), aba = j2 ? I.abajo('ArrowDown') : I.abajo('KeyS');
     const izq = j2 ? I.abajo('ArrowLeft') : I.abajo('KeyA'), der = j2 ? I.abajo('ArrowRight') : I.abajo('KeyD');
     if (arr) b.maq = Math.min(1, b.maq + dt * 0.9); if (aba) b.maq = Math.max(-0.4, b.maq - dt * 0.9);
@@ -76,6 +79,22 @@ H.juego = {
     }
     const esp = uno ? I.pulsada('KeyE') : j2 ? I.pulsada('ShiftRight') : I.pulsada('KeyF');
     if (esp) this.espolon(b);
+  },
+  /* El jugador apunta con el mouse en 1 jugador y como anfitrión en línea */
+  mandoMouse(idx) { return idx === 0 && (H.modo === '1P' || H.online === 'host'); },
+  /* Jugador 2 en línea: el anfitrión aplica los controles que llegan por la red */
+  controlRemoto(b, dt) {
+    const E = H.red.ent, U = H.red.usado;
+    if (E.w) b.maq = Math.min(1, b.maq + dt * 0.9); if (E.s) b.maq = Math.max(-0.4, b.maq - dt * 0.9);
+    b.timon = (E.a ? 1 : 0) - (E.d ? 1 : 0); if (b.emb > 0) b.maq = 1;
+    const o = this.enemigoCercano(b);
+    const lead = o ? o.pos.clone().addScaledVector(o.frente(), o.vel * (o.pos.distanceTo(b.pos) / H.VEL_BALA) * 0.85) : null;
+    const r = lead ? b.ladoHacia(lead) : null;
+    const banda = lado => b.dispararBanda(lado, r && r.lado === lado && r.enArco ? lead : null, 7);
+    if (E.f > U.f) { U.f = E.f; banda(r ? r.lado : 'izq'); }
+    if (E.q > U.q) { U.q = E.q; banda('izq'); }
+    if (E.e > U.e) { U.e = E.e; banda('der'); }
+    if (E.x > U.x) { U.x = E.x; this.espolon(b); }
   },
   fuegoTorre(b, dist) { return b.dispararTorre(dist === undefined ? (b._dist || 150) : dist); },
   espolon(b) {
@@ -150,6 +169,7 @@ H.juego = {
       c.position.set(h.pos.x + Math.sin(a) * 95, 20 + Math.sin(t * 0.2) * 5, h.pos.z + Math.cos(a) * 95); c.lookAt(h.pos.x + 12, 9, h.pos.z - 10);
       return;
     }
+    if (H.online === 'guest') return H.red.actualizarInvitado(this, dt);
     this.humanos.forEach((b, i) => { if (b.vivo) this.controlHumano(b, i, dt); else b.timon = 0; });
     this.buques.forEach(b => { if (b.control === 'IA') H.ia.actualizar(b, dt, this); });
     this.buques.forEach(b => b.actualizar(dt, t));
@@ -161,13 +181,15 @@ H.juego = {
     // Centro del mar y del sol: promedio de los jugadores presentes
     let cx = 0, cz = 0, n = 0; this.humanos.forEach(b => { if (!b.escapado) { cx += b.pos.x; cz += b.pos.z; n++; } });
     if (n) { cx /= n; cz /= n; H.oceano.actualizar(t, cx, cz); H.mundo.seguirSol(cx, cz); }
-    this.humanos.forEach((b, i) => this.camara(i, dt));
-    const j1 = this.humanos[0]; H.audio.velMotor(j1.vivo ? j1.vel : 0);
-    if (this.humanos.some(b => b.vivo && b.hp < b.maxHp * 0.3)) H.audio.alarma();
+    this.vistas.forEach((j, k) => this.camara(k, dt));
+    const j1 = this.humanos[this.vistas[0]]; H.audio.velMotor(j1.vivo ? j1.vel : 0);
+    if (this.vistas.some(j => this.humanos[j].vivo && this.humanos[j].hp < this.humanos[j].maxHp * 0.3)) H.audio.alarma();
     H.hud.actualizar(this, dt);
+    if (H.online === 'host') H.red.tickAnfitrion(this, dt);
   },
-  camara(i, dt) {
-    let b = this.humanos[i]; const c = this.camaras[i], uno = H.modo === '1P';
+  camara(k, dt) {
+    const i = this.vistas[k];
+    let b = this.humanos[i]; const c = this.camaras[k], uno = this.mandoMouse(i);
     if (b.escapado && this.humanos[1 - i]) b = this.humanos[1 - i];
     const f = b.frente(); let mira = f;
     if (uno && b.vivo && !H.debug.bot) { const ap = this.apunte.clone().sub(b.pos).setY(0); if (ap.lengthSq() > 1) mira = f.clone().lerp(ap.normalize(), 0.3).normalize(); }
@@ -175,7 +197,7 @@ H.juego = {
     c.position.lerp(obj, Math.min(1, dt * 2.6));
     const s = H.fx.sacudida[i] || 0;
     c.lookAt(b.pos.x + mira.x * 34 + H.util.rnd(-s, s), 6 + H.util.rnd(-s, s), b.pos.z + mira.z * 34 + H.util.rnd(-s, s));
-    const m = this.marcas[i], hb = this.humanos[i];
+    const m = this.marcas[k], hb = this.humanos[i];
     if (m && hb.T.arma === 'torre') {
       m.visible = hb.vivo; const a = hb.rumbo + hb.torreAng, d = (hb._dist || 150) + hb.T.L * 0.1;
       m.position.set(hb.pos.x + Math.sin(a) * d, 1.4, hb.pos.z + Math.cos(a) * d);
@@ -188,7 +210,7 @@ H.juego = {
     if (n === 1) { r.setScissorTest(false); r.setViewport(0, 0, w, h); r.render(this.escena, this.camaras[0]); return; }
     r.setScissorTest(true);
     this.camaras.forEach((c, i) => {
-      this.marcas.forEach((m, k) => { m.visible = k === i && this.humanos[k].vivo && this.humanos[k].T.arma === 'torre'; });
+      this.marcas.forEach((m, k) => { const hb = this.humanos[this.vistas[k]]; m.visible = k === i && hb.vivo && hb.T.arma === 'torre'; });
       const x = Math.floor(i * w / n); r.setViewport(x, 0, Math.floor(w / n), h); r.setScissor(x, 0, Math.floor(w / n), h); r.render(this.escena, c);
     });
     r.setScissorTest(false);

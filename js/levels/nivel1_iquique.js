@@ -19,7 +19,7 @@ H.NIVELES.push({
     this.esm = J.agregar('esmeralda', { x: 250, z: 40, rumbo: -1.6, hpMul: 2.4, ia: { tipo: 'ancla', centro: [230, 30], radio: 75, error: 26, fuegoDesde: 7 } });
     this.cov = J.agregar('covadonga', { x: 225, z: -90, rumbo: 3.1, ia: { tipo: 'huir', desde: 24, maq: 0.8, error: 34, fuegoDesde: 7, destino: [[300, -330], [285, -500], [300, -640], [240, -960]] } });
     if (modo !== '2P') this.ind.ia.objetivo = this.cov;
-    this.avisos = [[1.5, 'W / S: máquinas · A / D: timón'], [8, modo === '1P' ? 'Apunta la torre con el MOUSE y dispara con CLIC' : 'J1: Q/E giran la torre, ESPACIO dispara · J2: ENTER dispara la banda'],
+    this.avisos = [[1.5, 'W / S: máquinas · A / D: timón'], [8, modo === '1P' ? 'Apunta la torre con el MOUSE y dispara con CLIC' : H.online ? 'J1: MOUSE y CLIC para la torre · J2: CLIC o ESPACIO dispara la banda' : 'J1: Q/E giran la torre, ESPACIO dispara · J2: ENTER dispara la banda'],
       [16, 'Con la barra de ESPOLÓN llena, embiste de proa a la Esmeralda'], [25, 'La Covadonga huye hacia el sur, pegada a la costa']];
     this.avisoCov = false; this.guion = false;
   },

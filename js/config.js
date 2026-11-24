@@ -11,6 +11,7 @@ const H = {
   VEL_BALA: 150,         // velocidad horizontal de los proyectiles
   estado: 'CARGA',       // CARGA, PORTADA, REGISTRO, MENU, BRIEFING, JUGANDO, PAUSA, RESULTADO
   modo: '1P',            // 1P, 2P, DUELO
+  online: null,          // null (local), 'host' (anfitrión J1) o 'guest' (invitado J2)
   nivelIdx: 0,
   puntaje: 0,
   perfil: { nombre: '', dni: '', sexo: '' },

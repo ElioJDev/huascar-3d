@@ -11,7 +11,7 @@
   $('lienzo').appendChild(renderer.domElement);
   addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); H.juego.redimensionar(); });
 
-  H.guardado.cargar(); H.input.init(); H.audio.init(); H.voz.init(); H.pantallas.init();
+  H.guardado.cargar(); H.input.init(); H.audio.init(); H.voz.init(); H.pantallas.init(); H.red.envolver();
 
   H.tex.cargar(k => { $('cargaBar').style.width = Math.round(k * 100) + '%'; }, () => {
     H.juego.iniciarDiorama(); H.pantallas.irPortada();
@@ -32,7 +32,7 @@
     else if (H.estado === 'JUGANDO' && (I.pulsada('KeyP') || I.pulsada('Escape'))) P.pausa(true);
     else if (H.estado === 'PAUSA' && (I.pulsada('KeyP') || I.pulsada('Escape'))) P.pausa(false);
     // Comando de voz (mantener V) — solo en 1 jugador
-    if (H.estado === 'JUGANDO' && H.modo === '1P') {
+    if (H.estado === 'JUGANDO' && (H.modo === '1P' || H.online === 'host')) {
       if (I.abajo('KeyV') && !vozActiva && H.voz.Rec) {
         vozActiva = true; $('hudVoz').classList.remove('oculto'); $('hudVozTxt').textContent = 'Escuchando… (fuego, espolón, avante, alto, pausa)';
         H.voz.escuchar({

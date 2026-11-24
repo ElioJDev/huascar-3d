@@ -83,6 +83,19 @@ class Buque {
     this.modelo.bandera.rotation.y = Math.PI / 2 + Math.sin(t * 5 + this.pos.x) * 0.25;
     if (this.modelo.torre) this.modelo.torre.rotation.y = this.torreAng;
   }
+  /* Solo efectos (humo y estela) para el invitado en línea: la física la calcula el anfitrión */
+  cosmetico(dt, t) {
+    if (this.hundiendo) { if (Math.random() < dt * 5) H.fx.humo(this.grupo.position.clone().setY(3), 6, 0x444444); return; }
+    if (this.encallado || this.escapado) return;
+    const danado = this.hp < this.maxHp * 0.3; this.tHumo -= dt;
+    if (this.tHumo <= 0) {
+      this.tHumo = danado ? 0.16 : 0.5;
+      if (danado) H.fx.humo(this.mundo(new THREE.Vector3(H.util.rnd(-2, 2), this.modelo.alto + 2, H.util.rnd(-8, 8))), 5, 0x2a2a2a);
+      else if (Math.abs(this.vel) > 3) H.fx.humo(this.mundo(this.modelo.chim), 3.5, 0x555555);
+    }
+    this.tEstela -= dt;
+    if (Math.abs(this.vel) > 5 && this.tEstela <= 0) { this.tEstela = 0.14; H.fx.espuma(this.pos.clone().addScaledVector(this.frente(), -this.T.L / 2).setY(0.9), 4); }
+  }
   actualizar(dt, t) {
     const T = this.T, M = H.mundo;
     if (this.hundiendo) {

@@ -109,3 +109,17 @@ input.bien{border-color:#4fd18b}
 .hudJ.der .radar{right:auto;left:10px}
 .hudJ.der .ayuda{left:auto;right:10px}
 #indSilencio{position:fixed;right:10px;top:10px;z-index:40;background:rgba(160,20,20,.9);border:2px solid #fff;padding:6px 10px;font-size:9px}
+
+/* ---------- Sala en línea ---------- */
+.btn.rojo{background:#d3052d;color:#fff;border-bottom-color:#7a0a1c}
+.btn.rojo:hover{background:#f0204a}
+.salaCols{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap}
+.salaCol{flex:1;min-width:260px;background:#0a1626;border:2px solid #3d6a96;padding:14px}
+.salaCol h3{font-size:12px;color:#ffce54;margin-bottom:6px}
+.salaCol label.radio{margin:8px 0;font-size:9px}
+input.codigo{font-size:22px;letter-spacing:8px;text-align:center;text-transform:uppercase;margin:8px 0}
+.codigoGrande{font-size:40px;letter-spacing:10px;color:#ffce54;margin:10px 0;text-shadow:3px 3px 0 #5a3410}
+.enlace{word-break:break-all;margin:6px 0;color:#9fc3e8}
+.jugadores{margin-top:12px;font-size:10px;line-height:2;color:#fff}
+.salaEstado{min-height:18px;font-size:10px;color:#9fc3e8;margin:8px 0}
+.salaEstado.ok{color:#4fd18b}.salaEstado.error{color:#ff8a70}.salaEstado.espera{color:#ffce54;animation:parp 1.2s steps(2) infinite}
